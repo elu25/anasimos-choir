@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Anasimos Choir">
+<meta name="theme-color" content="#8B2500">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Anasimos Choir</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #FDF8F0;
+    --surface: #FFFFFF;
+    --surface-alt: #F5EDD8;
+    --primary: #8B2500;
+    --primary-light: #C4412B;
+    --accent: #D4A017;
+    --accent-light: #F0C040;
+    --text: #1A0A00;
+    --text-sec: #6B4226;
+    --text-muted: #9C6B47;
+    --border: #E8D5B0;
+    --chorus-bg: #FFF8E8;
+    --chorus-border: #D4A017;
+    --verse-bg: #FFFFFF;
+    --bridge-bg: #FFF0F0;
+    --bridge-border: #C4412B;
+    --tab-bar: #FFFFFF;
+    --header-start: #8B2500;
+    --header-end: #C4412B;
+    --card-shadow: rgba(139,37,0,0.12);
+    --number-badge: #8B2500;
+    --fav-active: #D4A017;
+  }
+  .dark {
+    --bg: #0F0805;
+    --surface: #1E1209;
+    --surface-alt: #2A1A0E;
+    --primary: #E8724A;
+    --primary-light: #F0956E;
+    --accent: #F0C040;
+    --accent-light: #FFD860;
+    --text: #FDF0E0;
+    --text-sec: #D4A878;
+    --text-muted: #8C6040;
+    --border: #3D2415;
+    --chorus-bg: #2A1E0A;
+    --chorus-border: #F0C040;
+    --verse-bg: #1E1209;
+    --bridge-bg: #2A1209;
+    --bridge-border: #E8724A;
+    --tab-bar: #150C05;
+    --header-start: #1E0E05;
+    --header-end: #3D1A05;
+    --card-shadow: rgba(0,0,0,0.5);
+    --number-badge: #E8724A;
+    --fav-active: #F0C040;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Lora', serif; }
+  body { background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+
+  /* App Shell */
+  #app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; position: relative; }
+
+  /* Screens */
+  .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .screen.active { display: flex; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--header-start), var(--header-end));
+    padding: env(safe-area-inset-top, 44px) 20px 18px;
+    flex-shrink: 0;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .church-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--accent-light); margin-bottom: 4px; }
+  .app-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #FFF; letter-spacing: -0.5px; }
+  .app-subtitle { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .count-badge { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 12px; text-align: center; }
+  .count-badge .num { font-size: 20px; font-weight: 900; color: #FFF; display: block; }
+  .count-badge .lbl { font-size: 11px; color: rgba(255,255,255,0.75); }
+  .add-btn { background: var(--accent); color: var(--bg); font-size: 12px; font-weight: 800; padding: 7px 12px; border-radius: 10px; border: none; cursor: pointer; }
+
+  /* Search */
+  .search-bar { display: flex; align-items: center; background: rgba(255,255,255,0.15); border-radius: 14px; padding: 10px 14px; gap: 8px; }
+  .search-bar input { flex: 1; background: none; border: none; outline: none; color: #FFF; font-size: 15px; font-family: 'Lora', serif; }
+  .search-bar input::placeholder { color: rgba(255,255,255,0.55); }
+  .search-clear { color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; display: none; }
+
+  /* Categories */
+  .categories { background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; white-space: nowrap; padding: 10px 16px; display: flex; gap: 8px; flex-shrink: 0; scrollbar-width: none; }
+  .categories::-webkit-scrollbar { display: none; }
+  .cat-chip { display: inline-block; padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface-alt); color: var(--text-sec); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: 'Lora', serif; transition: all 0.2s; }
+  .cat-chip.active { background: var(--primary); border-color: var(--primary); color: #FFF; }
+
+  /* Song List */
+  .song-list { flex: 1; overflow-y: auto; padding: 8px 0 80px; -webkit-overflow-scrolling: touch; }
+  .results-label { font-size: 12px; color: var(--text-muted); padding: 8px 20px; font-weight: 500; }
+
+  /* Song Card */
+  .song-card { margin: 6px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 2px 8px var(--card-shadow); overflow: hidden; cursor: pointer; transition: transform 0.15s; }
+  .song-card:active { transform: scale(0.98); }
+  .song-card-body { display: flex; align-items: center; padding: 14px; gap: 12px; }
+  .song-number { width: 44px; height: 44px; border-radius: 12px; background: var(--number-badge); color: #FFF; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .song-info { flex: 1; min-width: 0; }
+  .song-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .song-cat { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .song-key { font-size: 12px; font-weight: 600; color: var(--text-sec); background: var(--surface-alt); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; }
+  .song-author { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fav-btn { font-size: 22px; cursor: pointer; flex-shrink: 0; }
+  .song-card-footer { background: var(--surface-alt); padding: 6px 14px; font-size: 12px; color: var(--text-sec); font-weight: 500; }
+  .custom-tag { font-size: 11px; background: var(--accent); color: var(--bg); padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+
+  /* Song Screen */
+  .song-header { background: linear-gradient(135deg, var(--header-start), var(--header-end)); padding: env(safe-area-inset-top, 44px) 20px 16px; flex-shrink: 0; }
+  .song-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .back-btn { color: #FFF; font-size: 16px; font-weight: 700; cursor: pointer; padding: 4px 0; }
+  .song-header-actions { display: flex; gap: 12px; align-items: center; }
+  .song-meta-block { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+  .big-number { background: rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 12px; }
+  .big-number span { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; color: #FFF; }
+  .song-title-block { flex: 1; }
+  .song-screen-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: #FFF; letter-spacing: -0.3px; line-height: 1.2; }
+  .song-screen-author { font-size: 12px; color: rgba(255,255,255,0.7); font-style: italic; margin-top: 4px; }
+  .song-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .song-tag { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 10px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 600; }
+
+  /* Lyrics */
+  .lyrics-scroll { flex: 1; overflow-y: auto; padding: 12px 16px 120px; -webkit-overflow-scrolling: touch; }
+  .lyric-section { border-radius: 16px; border: 1px solid var(--border); border-left-width: 4px; padding: 18px; margin-bottom: 14px; }
+  .lyric-section.chorus { background: var(--chorus-bg); border-left-color: var(--chorus-border); }
+  .lyric-section.verse { background: var(--verse-bg); border-left-color: transparent; }
+  .lyric-section.bridge { background: var(--bridge-bg); border-left-color: var(--bridge-border); }
+  .section-label { font-size: 12px; font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; }
+  .lyric-section.chorus .section-label { color: var(--accent); }
+  .lyric-section.verse .section-label { color: var(--text-sec); }
+  .lyric-section.bridge .section-label { color: var(--primary-light); }
+  .lyric-line { font-size: 18px; font-weight: 500; line-height: 32px; color: var(--text); }
+
+  /* Scroll Controls */
+  .scroll-controls { position: absolute; bottom: 72px; left: 0; right: 0; max-width: 480px; margin: 0 auto; display: none; flex-direction: row; align-items: center; gap: 12px; padding: 14px 20px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 12px var(--card-shadow); }
+  .scroll-controls.visible { display: flex; }
+  .speed-btn { width: 42px; height: 42px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface-alt); font-size: 20px; font-weight: 700; color: var(--text-sec); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .auto-scroll-btn { flex: 1; height: 46px; border-radius: 14px; border: none; font-size: 14px; font-weight: 800; cursor: pointer; transition: background 0.2s; }
+  .auto-scroll-btn.playing { background: var(--primary); color: #FFF; }
+  .auto-scroll-btn.paused { background: var(--accent); color: var(--bg); }
+
+  /* Tab Bar */
+  .tab-bar { background: var(--tab-bar); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom, 12px); height: calc(72px + env(safe-area-inset-bottom, 0px)); flex-shrink: 0; position: relative; z-index: 10; }
+  .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; padding-top: 8px; border: none; background: none; }
+  .tab-icon { font-size: 22px; opacity: 0.5; transition: all 0.2s; }
+  .tab-label { font-size: 10px; font-weight: 500; color: var(--text-muted); transition: all 0.2s; }
+  .tab-btn.active .tab-icon { opacity: 1; }
+  .tab-btn.active .tab-label { color: var(--primary); font-weight: 700; }
+
+  /* Favorites Screen */
+  .fav-header { background: linear-gradient(135deg, var(--header-start), var(--header-end)); padding: env(safe-area-inset-top, 44px) 20px 24px; flex-shrink: 0; }
+  .fav-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #FFF; margin-top: 4px; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; padding: 40px; }
+  .empty-icon { font-size: 64px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: var(--text); text-align: center; }
+  .empty-desc { font-size: 15px; color: var(--text-muted); text-align: center; line-height: 22px; }
+
+  /* Settings Screen */
+  .settings-scroll { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 14px; }
+  .settings-section { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; }
+  .settings-section-title { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--primary); margin-bottom: 14px; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+  .settings-row-info { flex: 1; }
+  .settings-row-label { font-size: 16px; font-weight: 600; color: var(--text); }
+  .settings-row-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .toggle { position: relative; width: 51px; height: 31px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 31px; transition: 0.3s; cursor: pointer; }
+  .toggle-slider:before { content: ''; position: absolute; height: 24px; width: 24px; left: 3.5px; bottom: 3.5px; background: white; border-radius: 50%; transition: 0.3s; }
+  .toggle input:checked + .toggle-slider { background: var(--primary); }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+  /* Font size options */
+  .font-options { display: flex; gap: 10px; margin-bottom: 14px; }
+  .font-opt { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px 4px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface-alt); cursor: pointer; gap: 4px; transition: all 0.2s; }
+  .font-opt.active { background: var(--primary); border-color: var(--primary); }
+  .font-opt .sample { font-weight: 800; color: var(--text); }
+  .font-opt.active .sample, .font-opt.active .fname { color: #FFF; }
+  .font-opt .fname { font-size: 11px; font-weight: 600; color: var(--text-sec); }
+  .preview-box { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .preview-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+
+  /* Social buttons */
+  .social-btn { display: flex; align-items: center; gap: 12px; width: 100%; background: var(--surface-alt); border: 1.5px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; text-decoration: none; }
+  .social-info { flex: 1; text-align: left; }
+  .social-platform { font-size: 15px; font-weight: 700; color: var(--text); }
+  .social-handle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .social-action { font-size: 12px; font-weight: 800; border: 1.5px solid; padding: 4px 8px; border-radius: 8px; white-space: nowrap; }
+  .divider { height: 1px; background: var(--border); margin: 14px auto; width: 80%; }
+  .about-center { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .about-app-name { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--text); }
+  .about-church { font-size: 13px; font-weight: 700; color: var(--primary); }
+  .about-desc { font-size: 14px; color: var(--text-sec); line-height: 22px; text-align: center; }
+  .section-mini-title { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--text); margin-bottom: 12px; align-self: flex-start; width: 100%; }
+
+  /* PIN Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
+  .modal-overlay.visible { display: flex; }
+  .pin-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 340px; overflow: hidden; }
+  .pin-modal-header { background: var(--primary); padding: 24px 20px; text-align: center; }
+  .pin-modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: #FFF; }
+  .pin-modal-sub { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 4px; }
+  .pin-modal-body { padding: 24px; }
+  .pin-hint { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px; line-height: 18px; }
+  .pin-dots { display: flex; justify-content: center; gap: 16px; margin-bottom: 12px; }
+  .pin-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+  .pin-error { font-size: 13px; color: var(--primary-light); font-weight: 600; text-align: center; min-height: 20px; margin-bottom: 8px; }
+  .keypad { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .keypad-row { display: flex; gap: 12px; justify-content: center; }
+  .key-btn { width: 72px; height: 72px; border-radius: 18px; border: 1.5px solid var(--border); background: var(--surface); font-size: 24px; font-weight: 700; color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; transition: all 0.1s; }
+  .key-btn:active { transform: scale(0.93); }
+  .key-btn.delete { background: var(--surface-alt); color: var(--primary-light); }
+  .key-btn.empty { background: transparent; border-color: transparent; cursor: default; }
+  .pin-cancel { text-align: center; margin-top: 20px; font-size: 15px; color: var(--text-muted); font-weight: 600; cursor: pointer; }
+  .shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-10px)}
+    40%{transform:translateX(10px)}
+    60%{transform:translateX(-8px)}
+    80%{transform:translateX(8px)}
+  }
+
+  /* Add/Edit Song Modal */
+  .add-modal { position: fixed; inset: 0; background: var(--bg); z-index: 900; display: none; flex-direction: column; }
+  .add-modal.visible { display: flex; }
+  .add-modal-header { background: linear-gradient(135deg, var(--header-start), var(--header-end)); padding: env(safe-area-inset-top, 44px) 20px 16px; flex-shrink: 0; }
+  .add-modal-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .add-modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: #FFF; }
+  .add-modal-scroll { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+  .form-card-title { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: var(--primary); margin-bottom: 14px; }
+  .form-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .form-label { width: 72px; font-size: 13px; font-weight: 600; color: var(--text-sec); flex-shrink: 0; }
+  .form-input { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--surface-alt); color: var(--text); font-size: 15px; font-family: 'Lora', serif; outline: none; }
+  .form-input:focus { border-color: var(--primary); }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+  .pill { padding: 6px 12px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface-alt); color: var(--text-sec); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: 'Lora', serif; }
+  .pill.active { background: var(--primary); border-color: var(--primary); color: #FFF; }
+  .section-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .section-type-row { display: flex; gap: 8px; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+  .type-pill { padding: 5px 10px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface-alt); color: var(--text-sec); font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Lora', serif; }
+  .type-pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .section-label-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--surface-alt); color: var(--accent); font-size: 13px; font-weight: 700; margin-bottom: 10px; font-family: 'Lora', serif; outline: none; }
+  .line-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .line-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface-alt); color: var(--text); font-size: 15px; font-family: 'Lora', serif; outline: none; }
+  .remove-line-btn { color: var(--text-muted); font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .add-line-btn { width: 100%; border: 1.5px dashed var(--accent); border-radius: 10px; padding: 8px; text-align: center; color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; background: none; font-family: 'Lora', serif; margin-top: 4px; }
+  .add-section-btn { width: 100%; border: 2px dashed var(--primary); border-radius: 16px; padding: 16px; text-align: center; color: var(--primary); font-weight: 800; font-size: 15px; cursor: pointer; background: none; font-family: 'Lora', serif; margin-bottom: 60px; }
+  .remove-section-btn { color: var(--primary-light); font-size: 18px; cursor: pointer; }
+  .save-btn { background: var(--accent); color: var(--bg); font-size: 13px; font-weight: 800; padding: 8px 16px; border-radius: 12px; border: none; cursor: pointer; }
+  .cancel-text-btn { color: #FFF; font-size: 16px; font-weight: 700; cursor: pointer; background: none; border: none; }
+
+
+  /* Audio Player */
+  .audio-player { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin: 0 0 14px 0; }
+  .audio-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .audio-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .audio-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .playing-badge { display: flex; align-items: center; gap: 4px; }
+  .playing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .playing-label { font-size: 11px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; }
+  .progress-track { height: 6px; border-radius: 3px; background: var(--border); position: relative; cursor: pointer; margin-bottom: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; background: var(--primary); transition: width 0.3s; }
+  .progress-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--primary); position: absolute; top: -4px; transform: translateX(-50%); }
+  .time-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 14px; }
+  .audio-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+  .audio-ctrl-btn { width: 54px; height: 54px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface-alt); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 2px; }
+  .audio-ctrl-icon { font-size: 20px; color: var(--text-sec); }
+  .audio-ctrl-label { font-size: 10px; font-weight: 600; color: var(--text-muted); }
+  .audio-play-btn { width: 64px; height: 64px; border-radius: 32px; background: var(--primary); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 26px; color: #FFF; }
+  .audio-error { background: var(--bridge-bg); border: 1px solid var(--bridge-border); border-radius: 10px; padding: 10px; margin-top: 10px; text-align: center; font-size: 13px; color: var(--primary-light); font-weight: 600; }
+
+  /* Install Banner (iOS) */
+  .install-banner { position: fixed; bottom: 80px; left: 16px; right: 16px; max-width: 448px; margin: 0 auto; background: var(--primary); color: #FFF; border-radius: 16px; padding: 14px 18px; display: none; z-index: 50; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .install-banner.visible { display: flex; align-items: center; gap: 12px; }
+  .install-text { flex: 1; font-size: 13px; line-height: 18px; }
+  .install-text strong { display: block; font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+  .install-close { font-size: 20px; cursor: pointer; opacity: 0.8; flex-shrink: 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--border); }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SONGS SCREEN -->
+  <div class="screen active" id="screen-songs">
+    <div class="header">
+      <div class="header-top">
+        <div>
+          <div class="church-label">✝️ FULL GOSPEL CHURCH · BUTAJIRA, ETHIOPIA</div>
+          <div class="app-title">Anasimos Choir</div>
+          <div class="app-subtitle">Lyrics Book</div>
+        </div>
+        <div class="header-right">
+          <div class="count-badge">
+            <span class="num" id="song-count">0</span>
+            <span class="lbl">songs</span>
+          </div>
+          <button class="add-btn" onclick="handleAddSong()">🔐 Add Song</button>
+        </div>
+      </div>
+      <div class="search-bar">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="Search title, number, or author..." oninput="handleSearch(this.value)">
+        <span class="search-clear" id="search-clear" onclick="clearSearch()">✕</span>
+      </div>
+    </div>
+    <div class="categories" id="categories-bar"></div>
+    <div class="song-list" id="song-list">
+      <div class="results-label" id="results-label"></div>
+    </div>
+  </div>
+
+  <!-- FAVORITES SCREEN -->
+  <div class="screen" id="screen-favorites">
+    <div class="fav-header">
+      <div class="church-label">✝️ FULL GOSPEL CHURCH · BUTAJIRA, ETHIOPIA</div>
+      <div class="fav-title">Anasimos Choir</div>
+      <div class="app-subtitle" style="color:rgba(255,255,255,0.65);margin-top:2px;">⭐ Favorites</div>
+    </div>
+    <div class="song-list" id="fav-list" style="padding-bottom:80px;"></div>
+  </div>
+
+  <!-- SETTINGS SCREEN -->
+  <div class="screen" id="screen-settings">
+    <div class="fav-header">
+      <div class="church-label">✝️ FULL GOSPEL CHURCH · BUTAJIRA, ETHIOPIA</div>
+      <div class="fav-title">Anasimos Choir</div>
+      <div class="app-subtitle" style="color:rgba(255,255,255,0.65);margin-top:2px;">⚙️ Settings</div>
+    </div>
+    <div class="settings-scroll">
+      <!-- Appearance -->
+      <div class="settings-section">
+        <div class="settings-section-title">🌙 APPEARANCE</div>
+        <div class="settings-row">
+          <div class="settings-row-info">
+            <div class="settings-row-label">Dark Mode</div>
+            <div class="settings-row-desc" id="dark-mode-desc">Warm light theme</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="dark-toggle" onchange="toggleDarkMode(this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <!-- Font Size -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔤 TEXT SIZE</div>
+        <div class="font-options">
+          <div class="font-opt" onclick="setFontSize('small')" id="fs-small"><span class="sample" style="font-size:14px">Aa</span><span class="fname">Small</span></div>
+          <div class="font-opt active" onclick="setFontSize('medium')" id="fs-medium"><span class="sample" style="font-size:17px">Aa</span><span class="fname">Medium</span></div>
+          <div class="font-opt" onclick="setFontSize('large')" id="fs-large"><span class="sample" style="font-size:20px">Aa</span><span class="fname">Large</span></div>
+          <div class="font-opt" onclick="setFontSize('xlarge')" id="fs-xlarge"><span class="sample" style="font-size:24px">Aa</span><span class="fname">XL</span></div>
+        </div>
+        <div class="preview-box">
+          <div class="preview-label">PREVIEW</div>
+          <div id="preview-title" style="font-family:'Playfair Display',serif;font-weight:800;color:var(--text);font-size:20px;">ኤሉሄ ኤሉሄ</div>
+          <div id="preview-lyric" style="color:var(--text-sec);font-size:17px;margin-top:4px;line-height:28px;">ኦ ድንቅ ነዉ ስራዉ የመስቀሉ</div>
+        </div>
+      </div>
+      <!-- Admin -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔐 ADMIN ACCESS</div>
+        <div id="admin-section"></div>
+      </div>
+      <!-- Follow Us -->
+      <div class="settings-section">
+        <div class="settings-section-title">🌐 FOLLOW US</div>
+        <a class="social-btn" href="https://www.youtube.com/@anasimos_choir" target="_blank">
+          <img src="https://cdn.simpleicons.org/youtube/FF0000" width="28" height="28" alt="YouTube">
+          <div class="social-info"><div class="social-platform">YouTube</div><div class="social-handle">@anasimos_choir</div></div>
+          <span class="social-action" style="color:#FF0000;border-color:#FF0000">Subscribe</span>
+        </a>
+        <a class="social-btn" href="https://www.facebook.com/anasimoschoir" target="_blank">
+          <img src="https://cdn.simpleicons.org/facebook/1877F2" width="28" height="28" alt="Facebook">
+          <div class="social-info"><div class="social-platform">Facebook</div><div class="social-handle">anasimoschoir</div></div>
+          <span class="social-action" style="color:#1877F2;border-color:#1877F2">Follow</span>
+        </a>
+        <a class="social-btn" href="https://www.instagram.com/anasimos_choir" target="_blank">
+          <img src="https://cdn.simpleicons.org/instagram/E1306C" width="28" height="28" alt="Instagram">
+          <div class="social-info"><div class="social-platform">Instagram</div><div class="social-handle">@anasimos_choir</div></div>
+          <span class="social-action" style="color:#E1306C;border-color:#E1306C">Follow</span>
+        </a>
+        <a class="social-btn" href="https://www.tiktok.com/@anasimos_choir" target="_blank">
+          <img src="https://cdn.simpleicons.org/tiktok/000000" width="28" height="28" alt="TikTok" style="border-radius:6px;background:#000">
+          <div class="social-info"><div class="social-platform">TikTok</div><div class="social-handle">@anasimos_choir</div></div>
+          <span class="social-action" style="color:#000000;border-color:#000000">Follow</span>
+        </a>
+      </div>
+      <!-- Contact -->
+      <div class="settings-section">
+        <div class="settings-section-title">📧 CONTACT DEVELOPER</div>
+        <a class="social-btn" href="mailto:eliassisay51@gmail.com?subject=Anasimos Choir App">
+          <span style="font-size:22px">✉️</span>
+          <div class="social-info"><div class="social-platform">Elias Sisay</div><div class="social-handle">eliassisay51@gmail.com</div></div>
+          <span class="social-action" style="color:var(--primary);border-color:var(--primary)">Email</span>
+        </a>
+      </div>
+      <!-- About -->
+      <div class="settings-section">
+        <div class="settings-section-title">ℹ️ ABOUT</div>
+        <div class="about-center">
+          <div style="font-size:48px">🎶</div>
+          <div class="about-app-name">Anasimos Choir</div>
+          <div class="about-church">✝️ Full Gospel Church</div>
+          <div class="about-church">Butajira, Ethiopia</div>
+          <div class="divider"></div>
+          <div class="about-desc">Anasimos Choir is a gospel choir of the Full Gospel Church in Butajira, Ethiopia — worshipping God through music and spreading the love of Christ through song.</div>
+          <div class="divider"></div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted)">VERSION</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">1.0.0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SONG DETAIL SCREEN -->
+  <div class="screen" id="screen-song">
+    <div class="song-header">
+      <div class="song-header-top">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="song-header-actions">
+          <span id="edit-btn" style="font-size:20px;cursor:pointer;display:none" onclick="handleEditSong()">✏️</span>
+          <span id="delete-btn" style="font-size:20px;cursor:pointer;display:none" onclick="handleDeleteSong()">🗑</span>
+          <span id="fav-btn-song" style="font-size:26px;cursor:pointer" onclick="toggleFavFromSong()">☆</span>
+        </div>
+      </div>
+      <div class="song-meta-block">
+        <div class="big-number"><span id="song-detail-number">#001</span></div>
+        <div class="song-title-block">
+          <div class="song-screen-title" id="song-detail-title">Song Title</div>
+          <div class="song-screen-author" id="song-detail-author"></div>
+        </div>
+      </div>
+      <div class="song-tags" id="song-detail-tags"></div>
+    </div>
+    <div id="audio-player-container" style="padding:12px 16px 0;display:none"></div>
+    <div class="lyrics-scroll" id="lyrics-scroll"></div>
+    <div class="scroll-controls" id="scroll-controls">
+      <div class="speed-btn" onclick="changeSpeed(-10)">−</div>
+      <button class="auto-scroll-btn paused" id="scroll-btn" onclick="toggleAutoScroll()">▶ Auto Scroll</button>
+      <div class="speed-btn" onclick="changeSpeed(10)">+</div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-songs" onclick="switchTab('songs')">
+      <span class="tab-icon">🎵</span>
+      <span class="tab-label">Songs</span>
+    </button>
+    <button class="tab-btn" id="tab-favorites" onclick="switchTab('favorites')">
+      <span class="tab-icon">⭐</span>
+      <span class="tab-label">Favorites</span>
+    </button>
+    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-label">Settings</span>
+    </button>
+  </div>
+
+  <!-- PIN Modal -->
+  <div class="modal-overlay" id="pin-modal">
+    <div class="pin-modal">
+      <div class="pin-modal-header">
+        <div style="font-size:36px;margin-bottom:8px">🔐</div>
+        <div class="pin-modal-title">Admin Access</div>
+        <div class="pin-modal-sub">Anasimos Choir — Developer Only</div>
+      </div>
+      <div class="pin-modal-body">
+        <div class="pin-hint">Enter your 4-digit PIN to add or edit lyrics</div>
+        <div class="pin-dots" id="pin-dots">
+          <div class="pin-dot" id="dot0"></div>
+          <div class="pin-dot" id="dot1"></div>
+          <div class="pin-dot" id="dot2"></div>
+          <div class="pin-dot" id="dot3"></div>
+        </div>
+        <div class="pin-error" id="pin-error"></div>
+        <div class="keypad">
+          <div class="keypad-row">
+            <button class="key-btn" onclick="pinPress('1')">1</button>
+            <button class="key-btn" onclick="pinPress('2')">2</button>
+            <button class="key-btn" onclick="pinPress('3')">3</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" onclick="pinPress('4')">4</button>
+            <button class="key-btn" onclick="pinPress('5')">5</button>
+            <button class="key-btn" onclick="pinPress('6')">6</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn" onclick="pinPress('7')">7</button>
+            <button class="key-btn" onclick="pinPress('8')">8</button>
+            <button class="key-btn" onclick="pinPress('9')">9</button>
+          </div>
+          <div class="keypad-row">
+            <button class="key-btn empty"></button>
+            <button class="key-btn" onclick="pinPress('0')">0</button>
+            <button class="key-btn delete" onclick="pinDelete()">⌫</button>
+          </div>
+        </div>
+        <div class="pin-cancel" onclick="closePinModal()">Cancel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Song Modal -->
+  <div class="add-modal" id="add-modal">
+    <div class="add-modal-header">
+      <div class="add-modal-header-row">
+        <button class="cancel-text-btn" onclick="closeAddModal()">✕ Cancel</button>
+        <div class="add-modal-title" id="add-modal-title">➕ New Song</div>
+        <button class="save-btn" onclick="saveSong()">✓ Save</button>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.6)">🔐 Admin Mode — Anasimos Choir</div>
+    </div>
+    <div class="add-modal-scroll">
+      <div class="form-card">
+        <div class="form-card-title">📋 SONG DETAILS</div>
+        <div class="form-row"><span class="form-label">Hymn No.</span><input class="form-input" id="f-number" type="number" placeholder="001" style="width:80px;flex:unset"></div>
+        <div class="form-row"><span class="form-label">Title *</span><input class="form-input" id="f-title" placeholder="Song title"></div>
+        <div class="form-row"><span class="form-label">Author</span><input class="form-input" id="f-author" placeholder="Composer / Arranger"></div>
+        <div style="background:var(--chorus-bg);border:1.5px solid var(--chorus-border);border-radius:14px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--accent);margin-bottom:6px">🎵 AUDIO RECORDING (Optional)</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:18px;margin-bottom:8px">Upload recording to Google Drive → Share → Copy link → Paste here</div>
+          <input class="form-input" id="f-audio" placeholder="https://drive.google.com/uc?id=..." style="width:100%" type="url">
+        </div>
+        <div class="form-row" style="align-items:flex-start"><span class="form-label" style="padding-top:6px">Category</span><div class="pill-group" id="f-category"></div></div>
+        <div class="form-row" style="align-items:flex-start"><span class="form-label" style="padding-top:6px">Key</span><div class="pill-group" id="f-key"></div></div>
+        <div class="form-row" style="align-items:flex-start"><span class="form-label" style="padding-top:6px">Tempo</span><div class="pill-group" id="f-tempo"></div></div>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--text);margin-bottom:12px">🎵 Lyrics</div>
+      <div id="sections-container"></div>
+      <button class="add-section-btn" onclick="addSection()">+ Add Section (Verse / Chorus / Bridge)</button>
+    </div>
+  </div>
+
+  <!-- iOS Install Banner -->
+  <div class="install-banner" id="install-banner">
+    <span style="font-size:28px">📱</span>
+    <div class="install-text">
+      <strong>Add to Home Screen</strong>
+      Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong> to install this app on your iPhone!
+    </div>
+    <span class="install-close" onclick="document.getElementById('install-banner').classList.remove('visible')">✕</span>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────
+const ADMIN_PIN = '2024'; // Change this to your PIN
+const FONT_SIZES = {
+  small: { body: 14, title: 17, verse: 15, label: 11 },
+  medium: { body: 16, title: 20, verse: 18, label: 13 },
+  large: { body: 19, title: 24, verse: 21, label: 15 },
+  xlarge: { body: 23, title: 28, verse: 25, label: 17 },
+};
+
+// ── SONGS DATA ───────────────────────────────────────────
+const BUILTIN_CATEGORIES = [
+  { id: 'አምልኮ', label: 'አምልኮ', icon: '🙌' },
+  { id: 'ምስጋና', label: 'ምስጋና', icon: '🙏' },
+  { id: 'ጸሎት ልመና', label: 'ጸሎት ልመና', icon: '🛐' },
+  { id: 'christmas', label: 'Christmas', icon: '⭐' },
+  { id: 'easter', label: 'Easter', icon: '✝️' },
+];
+
+const BUILTIN_SONGS = [
+  {
+    id: '001',
+    number: '001',
+    title: 'ኤሎሄ ኤሎሄ',
+    category: 'ምስጋና',
+    author: '',
+    key: 'G',
+    tempo: 'Moderate',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ኦ ድንቅ ነዉ ስራዉ የመስቀሉ (2)',
+          'የእግዚአብሔር ኃይል መድኃኒት ላመኑ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ላማ ሰበቅታኒ ኤሎሄ ኤሎሄ',
+          'የመስቀል ላይ ሲቃዉ የጮኸው መድኅኔ',
+          'ለእርሱ ጩኸት ነበር የሕማም ኡኡታ',
+          'መዝሙር ሆነኝ ለእኔ የዘዉትር እልልታ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ኦ ድንቅ ነዉ ስራዉ የመስቀሉ (2)',
+          'የእግዚአብሔር ኃይል መድኃኒት ላመኑ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'የሰራዉን ስራ በመስቀል ላይ ጣሩ',
+          'ከሞት እንዳዳነኝ በእንከን የለሽ ግብሩ',
+          'አዉርቼ አዉርቼ ዘምሬ ዘምሬ',
+          'አልረካ አልኩኝ ይኸዉ እስከ ዛሬ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ኦ ድንቅ ነዉ ስራዉ የመስቀሉ (2)',
+          'የእግዚአብሔር ኃይል መድኃኒት ላመኑ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'ሸክም ላጎበጠዉ ከማረዉ ጓዳ',
+          'ኑ አምልጡ የሚል ክዘላለም ፍዳ',
+          'የፍቅር ፉጨት ነዉ ከሩቅ የሚጠራ',
+          'የመስቀሉ ስራ የሰዉ መዳን ጮራ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ኦ ድንቅ ነዉ ስራዉ የመስቀሉ (2)',
+          'የእግዚአብሔር ኃይል መድኃኒት ላመኑ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 4',
+        lines: [
+          'የተመታዉ ጥፊ ያረፈበት ጅራፍ',
+          'የተወጋዉ ጎኑ የመከራዉ ዶፍ',
+          'የወጣዉ አቅበት መስቀል ተሸክሞ',
+          'ፈውስ ሆነኝ መድኅኔ የኔን ሕመም ታሞ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ኦ ድንቅ ነዉ ስራዉ የመስቀሉ (2)',
+          'የእግዚአብሔር ኃይል መድኃኒት ላመኑ',
+        ],
+      },
+    ],
+  },
+  {
+    id: '002',
+    number: '002',
+    title: 'ልኑር እንደ ቃልህ',
+    category: 'አምልኮ',
+    author: '',
+    key: 'G',
+    tempo: 'Moderate',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ልኑር እንደ ቃልህ',
+          'ልሂድ እንደ ሀሳብህ',
+          'ልጥላ የጠላኸውን',
+          'ልውደድ የወደድከውን',
+          'ላድርግ ደስ የሚልህን',
+          'አንተ የፈቀድከውን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ቃልህን ልኑር መንገድህን ልሂድ',
+          'ፈለግህን ልከተል ወደ አንተ ልራመድ',
+          'እንደ ቃልህ እንጂ እንደ ምኞቴ አልሁን',
+          'ያልከኝን እንጂ ያልኩትን አልሁን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ልኑር እንደ ቃልህ',
+          'ልሂድ እንደ ሀሳብህ',
+          'ልጥላ የጠላኸውን',
+          'ልውደድ የወደድከውን',
+          'ላድርግ ደስ የሚልህን',
+          'አንተ የፈቀድከውን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ፍቃዴ ሳይሆን ፈቃድህ ይግዛኝ',
+          'ባንተ ጎዳና እንጂ በአለም አልገኝ',
+          'ሚጠፋውን ሳይሆን ዘላለሙን ልያዝ',
+          'የህይወቴን ምዕራፍ ካንተ ጋራ ልጓዝ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ልኑር እንደ ቃልህ',
+          'ልሂድ እንደ ሀሳብህ',
+          'ልጥላ የጠላኸውን',
+          'ልውደድ የወደድከውን',
+          'ላድርግ ደስ የሚልህን',
+          'አንተ የፈቀድከውን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'ህይወቴ ታክብርህ ደስ ታሰኝ ነፍሴ',
+          'ካንቱን ነገር ሳይሆን ከብርህን ትናገር',
+          'ማዳን ምህረትህን ዘላለም ትዘምር',
+          'እኔ ያንተ ልሁን ዘመኔ ላይ ክበር',
+        ],
+      },
+    ],
+  },
+  {
+    id: '003',
+    number: '003',
+    title: 'ይታይ ንጉሱ',
+    category: 'አምልኮ',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'እርሱ ብቻ ብቻ ይታይ፤ ነግሶ ይኑር በእኛ ላይ',
+          'ከቶ የለም እርሱን መሰይ፤ አልፋ ኦሜጋ ጌታ አዶናይ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ሁሉ ስለሆነ በእርሱና ለእርሱ',
+          'ጎልቶ ገኖ ይታይ ነግሶ በመቅደሱ',
+          'ከፍ ይበል ንጉሱ ይሳል በደማቁ',
+          'ከእርሱ ሌላ የለም ሰዎች ሁሉ ይወቁ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'እርሱ ብቻ ብቻ ይታይ፤ ነግሶ ይኑር በእኛ ላይ',
+          'ከቶ የለም እርሱን መሰይ፤ አልፋ ኦሜጋ ጌታ አዶናይ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ጸጋዉ ምህረቱ በእኛ ላይ በዝቶ',
+          'ያማረዉ ኑሯችን በእርሱ ተበጅቶ',
+          'ሰዉ ያደረገን እርሱ መሆኑን ዘንግተን',
+          'እኛ እኛ ስንል እንዳንጠፋ ስተን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'እርሱ ብቻ ብቻ ይታይ፤ ነግሶ ይኑር በእኛ ላይ',
+          'ከቶ የለም እርሱን መሰይ፤ አልፋ ኦሜጋ ጌታ አዶናይ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'የኔ አይደለሁም እኔ አለኝ ባለቤት',
+          'በዉድ ዋጋ የገዛኝ በደሙ ቤዛነት',
+          'የኔ ምለው የለኝ ሁሉም የንጉሱ',
+          'መንገድ ጠራጊ ነኝ የምጮህ ስለእሱ',
+        ],
+      },
+    ],
+  },
+  {
+    id: '004',
+    number: '004',
+    title: 'ይወደናል',
+    category: 'ምስጋና',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'የፍቅር ጥጉ ምልክቱ',
+          'የእግዚኣብሔር ምህረት ቸርነቱ',
+          'በሚወደው በአንድ ልጁ',
+          'አደረገን ወዳጆቹ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ይወደናል (3) ጌታ ኢየሱስ',
+          'ይወደናል (2) ያፈቅረናል',
+          'ውዱ ኢየሱስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ወደ አለም የመጣበት',
+          'ትልቁና ዋናዉ ምክንያት',
+          'ክብሩን ትቶ የመጣልን',
+          'እኛን ከሞት ሊያድነን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ይወደናል (3) ጌታ ኢየሱስ',
+          'ይወደናል (2) ያፈቅረናል',
+          'ውዱ ኢየሱስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'በመስቀል ጣር የወደደን',
+          'እስከ መስቀል ያፈቀረን',
+          'በስቃይ ምጥ የወለደን',
+          'ከእግዚአብሔር አስታረቀን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ይወደናል (3) ጌታ ኢየሱስ',
+          'ይወደናል (2) ያፈቅረናል',
+          'ውዱ ኢየሱስ',
+        ],
+      },
+    ],
+  },
+  {
+    id: '005',
+    number: '005',
+    title: 'የማለዳ ምስጋና',
+    category: 'ምስጋና',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ማለዳ',
+          'ኪዳነወርቅ ከአክሊሉ ጋር የሆነዉ',
+          'ተነስተን በቅዱስ ስፍራ ቆመን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ጸሎቱና ኪዳኑ በህሊናችን',
+          'የጌታን ቸርነት ማሰብ ያስፈልጋል',
+          'ምህረት እንዳገኘን ዛሬም እንላለን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'መንገዱ ሰላም ሆነን እንደዚሁ ጌታ',
+          'ሀሳቡን ማመስገን ለዘላለም ጸጋ',
+          'ዘላለማዊ ህይወት ያገኘነዉ ከእርሱ',
+          'ስምህ የተባረከ ይሁንና',
+        ],
+      },
+    ],
+  },
+  {
+    id: '006',
+    number: '006',
+    title: 'ለኔ ብለህ ነው',
+    category: 'አምልኮ',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ለኔ ብለህ መጥተህ ቆስለክ የደማኸው',
+          'ቁስሌን በቁስልህ እንዲያዉም የፈወስከው',
+          'በጅራፍ ብዛት ጀርባህ የተላጠው',
+          'በራስ ቅሉ ስፍራ የተንገላታኸው',
+          'ለኔ ብለህ ነው',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ምን አይነት ቃል አለኝ አንተን የሚመጥን',
+          'ላወድሰው ጌታ ታላቁን ስምህን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ለላኔ ስትል በመስቀል ሞትክልኝ',
+          'ነብስን እስከመስጠት በፍቅርህ ነካኸኝ',
+          'ልከፍለው አልችልም ውለታህን ጌታዬ',
+          'ላመስግንህ እንጂ ባዲሱ ዜማዬ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ምን አይነት ቃል አለኝ አንተን የሚመጥን',
+          'ላወድሰው ጌታ ታላቁን ስምህን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'ኢየሰሴ ፍቅርህ ልቤ ላይ ታትሟል',
+          'የትኛውስ ፍጡር እርሱን ይፍቀዋል',
+          'ስምህ ሁል ጊዜ ካፌ ያመልጠኛል',
+          'ባመልከህ ባደንቅህ እንዴት ይበቃኛል',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ምን አይነት ቃል አለኝ አንተን የሚመጥን',
+          'ላወድሰው ጌታ ታላቁን ስምህን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 4',
+        lines: [
+          'ከውርደት አንስተህ ህይወት እለበስከኝ',
+          'ሙት የነበርኩትን ህያው አደረከኝ',
+          'እንዴት ድንቅ አምላክ ነህ ለህዝብ የምትራራ',
+          'ነጥቀህ ምታወጣው ከማይረባው ስፍራ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ምን አይነት ቃል አለኝ አንተን የሚመጥን',
+          'ላወድሰው ጌታ ታላቁን ስምህን',
+        ],
+      },
+    ],
+  },
+  {
+    id: '007',
+    number: '007',
+    title: 'አዳኝ አለን እኛ',
+    category: 'ምስጋና',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አዳኝ አለን እኛ ደሙን ያፈሰሰ',
+          'ሁሉን ድል አድርጎ በሁሉ ያሸነፈ',
+          'ሞትእንኳ ሊይዘው ዘንድ ከቶ አልቻለምና',
+          'ክብርን እንሰጣለን እያልን ሀሌሉያ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'የሞት ጣር ሳይዘን ብርሃንን እንዳናይ',
+          'ሀጢያት ጋርዶን ሲሆንብን ከልካይ',
+          'በፈሰሰው ደምህ በስጋህ ግርፋት',
+          'ፈውስን ተቀበልን ታደግኸን ከሞት',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አዳኝ አለን እኛ ደሙን ያፈሰሰ',
+          'ሁሉን ድል አድርጎ በሁሉ ያሸነፈ',
+          'ሞትእንኳ ሊይዘው ዘንድ ከቶ አልቻለምና',
+          'ክብርን እንሰጣለን እያልን ሀሌሉያ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ድልድይ ሆነህልን መዳን ለነፍሳችን',
+          'ከአብ አስታረክን ስለእኛ ታይተህልን',
+          'የከበደብንን ቀንበር ሁሉ ሰብረህ',
+          'ነጻ አወጣኸን ከባርነት ዋጅተህ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አዳኝ አለን እኛ ደሙን ያፈሰሰ',
+          'ሁሉን ድል አድርጎ በሁሉ ያሸነፈ',
+          'ሞትእንኳ ሊይዘው ዘንድ ከቶ አልቻለምና',
+          'ክብርን እንሰጣለን እያልን ሀሌሉያ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'የዘላለም አምላክ በምህረት አሰብከን',
+          'ከጨለማ አውጥተህ ህይወትን ሰጠኸን',
+          'መክፈል ባንችልም የአንተን ውለታ',
+          'እናመልክሃለን ዘወትር በደስታ',
+        ],
+      },
+    ],
+  },
+  {
+    id: '008',
+    number: '008',
+    title: 'ሀሌሉያ',
+    category: 'አምልኮ',
+    author: '',
+    key: 'C',
+    tempo: 'Slow',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ድካማችንን ተቀበለ ደዌያችንን ተሸከመ',
+          'እርሱ ለእኛ የሰራው ስራ',
+          'ተዘርዝሮ አያልቅም ሁሌ ቢወራ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ሀሌሉያ ስምህ ይባረክ',
+          'ሀሌሉያ ስምህ ይቀደስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'የባሪያን መልክ ይዞ',
+          'በደላችንን አስወግዶ',
+          'ከዚህ በላይ ፍቅር ምን አለ',
+          'ነፍሱን ስለ ሀጢአት መስዋዕት አደረገ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ሀሌሉያ ስምህ ይባረክ',
+          'ሀሌሉያ ስምህ ይቀደስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'ጌታ ለእኛ ሞቶ',
+          'ሀጢያታችንን አስወገደ',
+          'በሰማያት ከአብ ጋር አስቀመጦን',
+          'ይኸው ዛሬ አለን ሀሌሉያ እያልን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ሀሌሉያ ስምህ ይባረክ',
+          'ሀሌሉያ ስምህ ይቀደስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 4',
+        lines: [
+          'ከሰማይ ሰማይ ወርዶ',
+          'ተገርፎ ተሰቃይቶ',
+          'ይኸው ዛሬ ቆምን በመስቀሉ ቤዛነት',
+          'ይኸው ዛሬ ቆምን ህይወትን አገኘን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ሀሌሉያ ስምህ ይባረክ',
+          'ሀሌሉያ ስምህ ይቀደስ',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ፍጻሜ',
+        lines: [
+          'ብርሃን በራ ለእኛ ብርሃን በራ',
+          'ኢየሱሴ እርሱ በሰራው ስራ',
+          'ዳንን እኛ ድነት አገኘን እኛ',
+          'የእግዚአብሔር ልጅ ክርስቶስ ተነስቷልና',
+        ],
+      },
+    ],
+  },
+  {
+    id: '009',
+    number: '009',
+    title: 'የፈተናው ብዛት',
+    category: 'ጸሎት ልመና',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+            {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'በሁሉ አስመለጥከን ከሚሰማው ሁከት',
+          'አምላካችን ኢየሱስ ሆንህልን ብርታት',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'የፈተናው ብዛት እምነት ሲፈትን',
+          'ማይታለፍ መስሎን መከራው ከብዶብን',
+          'መታመኛ ሆንህ በዚያም ጭንቅ ሰዓት',
+          'አሻግረህ አወጣኸን በድንቅ በታምራት',
+        ],
+      },
+            {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'በሁሉ አስመለጥከን ከሚሰማው ሁከት',
+          'አምላካችን ኢየሱስ ሆንህልን ብርታት',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'የእኛስ ጌታ አለ ሁኔታ ማይዘው',
+          'አሻግሮ የሚያወጣ ሁሌም ለታመነው',
+          'ከማይመሰል ነገር መልካምን የሚያወጣ',
+          'ሕይወትን የሚያሳርፍ እርሱን ለተጠጋ',
+        ],
+      },
+            {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'በሁሉ አስመለጥከን ከሚሰማው ሁከት',
+          'አምላካችን ኢየሱስ ሆንህልን ብርታት',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'የእሳት ቅጥር ነህ ዛሬም ለታመነህ',
+          'ስምህን ለሚጠራ ምታኖር ሰውረህ',
+          'መደገፍስ ባንተ በማይዝል ክንዶችህ',
+          'በክብር የምታቆም ሁሉን አሳልፈህ',
+        ],
+      },
+    ],
+  },
+  {
+    id: '010',
+    number: '010',
+    title: 'መንግስተ ሠማይ',
+    category: 'አምልኮ',
+    author: '',
+    key: 'C',
+    tempo: 'Fast',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማይ የምንናፍቀዉ',
+          'ያመንን በስሙ ፀንተን የምንጠብቀዉ',
+          'ትልቁ ተስፋችን ርስታችን እርሱ ነዉ',
+          'ኢየሱስ ይመጣል እንደተናገረው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'በዉቧ ከተማ እግዚአብሔር ባለበት',
+          'የበጉ ብርሃን ፀዳል በሞላበት',
+          'ቤት አለን ማረፊያ የዘላለም ህይወት',
+          'መኖሪያ አለን በዚያ በእምነት የምንገባበት',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማይ የምንናፍቀዉ',
+          'ያመንን በስሙ ፀንተን የምንጠብቀዉ',
+          'ትልቁ ተስፋችን ርስታችን እርሱ ነዉ',
+          'ኢየሱስ ይመጣል እንደተናገረው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ርሀብና እርዛት መከፋት መገፋት',
+          'ሃዘንና ለቅሶ እልቂትና ጥፋት',
+          'የምድር ስንክሳር ሁሉም ያበቃና',
+          'በእምነት እንገባለን ፅዮን ለምስጋና',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማይ የምንናፍቀዉ',
+          'ያመንን በስሙ ፀንተን የምንጠብቀዉ',
+          'ትልቁ ተስፋችን ርስታችን እርሱ ነዉ',
+          'ኢየሱስ ይመጣል እንደተናገረው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'አለንና ተስፋ አክሊል የህይወት',
+          'ጌታን ፊት ለፊት የምናይበት',
+          'ቅዱሳን ሁሉ እንዘምር በደስታ',
+          'እንጓደድ በዚህ እናሰማ እልልታ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማይ የምንናፍቀዉ',
+          'ያመንን በስሙ ፀንተን የምንጠብቀዉ',
+          'ትልቁ ተስፋችን ርስታችን እርሱ ነዉ',
+          'ኢየሱስ ይመጣል እንደተናገረው',
+        ],
+      },
+    ],
+  },
+  {
+    id: '011',
+    number: '011',
+    title: 'ደስ ደስ እያለን',
+    category: 'ምስጋና',
+    author: '',
+    key: 'A',
+    tempo: 'Slow',
+    lyrics: [
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ደስ ደስ እያለን (3X)',
+          'በፈቱ እንዘምራለን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'በተከበበ ድቅድቅ ከተማ',
+          'ሚውጥ እንበሳ ድምሸፅ እያሰማ',
+          'ጋርዶ ከልሎ ባባቲነቱ',
+          'ዛሬን አይተናል በምህረቱ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ደስ ደስ እያለን (3X)',
+          'በፈቱ እንዘምራለን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ወዳጅ ከጊዜ አብሮ ሲከፋ',
+          'ዋስትና ያሉት ራሱ ሲጠፋ',
+          'እያሻገረን አቅፎ ደግፎ',
+          'ምንም አልነካን ቅጥሩን አልፎ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ደስ ደስ እያለን (3X)',
+          'በፈቱ እንዘምራለን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'አማኑኤል ነዉ ከእኛ ጋር ያለ',
+          'ጋያል ጦረኛ በሰልፍ ያየለ',
+          'ጌታን ተማምነን ይኸዉ በረታን',
+          'ከእርሱ ጋር ሆነን ጠላትን ረታን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ደስ ደስ እያለን (3X)',
+          'በፈቱ እንዘምራለን',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 4',
+        lines: [
+          'ማዳኑን አዩ ፍቅሩን ቅመሱ',
+          'ማምለለጫ እርሱ ነዉ ኑ ተመለሱ',
+          'በፍቶም ደስታ እንሰብከዋለን',
+          'ስርዐን ላዐለም እናወራለን',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'ደስ ደስ እያለን (3X)',
+          'በፈቱ እንዘምራለን',
+        ],
+      },
+    ],
+  },
+  {
+    id: '012',
+    number: '012',
+    title: 'መንግስተ ሰማያት ነው',
+    category: 'አምልኮ',
+    author: '',
+    key: '',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ከላይ ያለው ቤት የከበረ ነው',
+          'እግዚአብሔር ለኛ ያዘጋጀው',
+          'በደስታ በሰላም የተሞላው',
+          'ክርስቶስ ያልበት የምንወደዉ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማያት ነው (×3)',
+          'ለኛ የተዘጋጀው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ሀጢያት የማይታወቅበት',
+          'እግዚአብሔር የሚመለክበት',
+          'ሀዘንና ጭንቀት የሌለበት',
+          'የምንወደዉ ስፍራ መንግስተ ሰማያት',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማይት ነው (×3)',
+          'ለኛ የተዘጋጀው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'ከዚች አለም ስቃይ የምንውጣበት',
+          'ያዳነን ጌታ የምናይበት',
+          'ሁሉም በደስታ ሚዘምርበት',
+          'ቀኑ ደርሳል ጌታ የሚመጣበት',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማያት ነው (×3)',
+          'ለኛ የተዘጋጀው',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 4',
+        lines: [
+          'ስለዚህ እኛ እንጠባበቅ እርሱን',
+          'አንድ ቀን ይመጣል አይቀርም ፍፁም',
+          'ያመኑትን ሊወስድ ጌታችን ይመጣል',
+          'ሁሉን የፈጠረዉ ከሁሉ ይበልጣል',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'መንግስተ ሰማያት ነው (×3)',
+          'ለኛ የተዘጋጀው',
+        ],
+      },
+    ],
+  },
+  {
+    id: '013',
+    number: '013',
+    title: 'አይሰወር ባለቤቱ',
+    category: 'ምስጋና',
+    author: '',
+    key: 'C',
+    tempo: '',
+    lyrics: [
+      {
+        type: 'verse',
+        label: 'ቁጥር 1',
+        lines: [
+          'ጌታው ተደብቆ ሎሌው ግን ገነነ',
+          'በገዛ ቤት ውስጥ ክብር ተሸፈነ',
+          'ስራህን እያየን ስም ግን ተረሳ',
+          'ምህረት ይብዛልን ዛሬም ሳንጠፋ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አይሰወር ባለቤቱ ሁሉን',
+          'የፈጠረዉ እግዚአብሔር ነው*(2)',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 2',
+        lines: [
+          'ደስታዬ ሲከብር ሲደስት ሙሽራው',
+          'ሁሉን ነገር መልካም ዉብ አድርጎ የሠራው',
+          'እርሱ ነው ቤዛዬ የነፍሴ ጠበቃ',
+          'ደርሶ የታደገን ህይወቱ ሲያቦቃ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አይሰወር ባለቤቱ ሁሉን',
+          'የፈጠረዉ እግዚአብሔር ነው*(2)',
+        ],
+      },
+      {
+        type: 'verse',
+        label: 'ቁጥር 3',
+        lines: [
+          'በተሰጠኝ ዕጋ ስሙን እጠራለው',
+          'ብዬ እያዘምርኩኝ ኢየሱስ ጌታ ነው',
+          'እምሰካራለው ሶምኝ እንዲድኑ',
+          'የዘላለም ህይወት በእርሱ እንዲያገኙ',
+        ],
+      },
+      {
+        type: 'chorus',
+        label: 'አዝማች',
+        lines: [
+          'አይሰወር ባለቤቱ ሁሉን',
+          'የፈጠረዉ እግዚአብሔር ነው*(2)',
+        ],
+      },
+    ],
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────
+let state = {
+  songs: [], favorites: [], customSongs: [],
+  activeCategory: null, search: '', currentSong: null,
+  isAdmin: false, pinCallback: null,
+  fontSizeKey: 'medium', darkMode: false,
+  scrolling: false, scrollSpeed: 30, scrollInterval: null,
+  editingSong: null,
+  currentFormSections: [],
+  formCategory: 'አምልኮ', formKey: '', formTempo: 'Moderate',
+};
+
+// ── STORAGE ──────────────────────────────────────────────
+const load = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+function initState() {
+  state.customSongs = load('anasimos_custom', []);
+  state.favorites = load('anasimos_favs', []);
+  state.fontSizeKey = load('anasimos_font', 'medium');
+  state.darkMode = load('anasimos_dark', false);
+  state.songs = [...BUILTIN_SONGS, ...state.customSongs].sort((a,b)=>parseInt(a.number)-parseInt(b.number));
+  if (state.darkMode) document.body.classList.add('dark');
+  document.getElementById('dark-toggle').checked = state.darkMode;
+  applyFontSize(state.fontSizeKey);
+}
+
+// ── ALL SONGS ────────────────────────────────────────────
+function getAllSongs() {
+  return [...BUILTIN_SONGS, ...state.customSongs].sort((a,b)=>parseInt(a.number)-parseInt(b.number));
+}
+
+function getCategoryById(id) {
+  return BUILTIN_CATEGORIES.find(c => c.id === id);
+}
+
+// ── RENDER SONGS LIST ─────────────────────────────────────
+function renderSongs() {
+  const songs = getAllSongs().filter(s => {
+    const q = state.search.toLowerCase();
+    const matchSearch = !q || s.title.toLowerCase().includes(q) || s.number.includes(q) || (s.author||'').toLowerCase().includes(q);
+    const matchCat = !state.activeCategory || s.category === state.activeCategory;
+    return matchSearch && matchCat;
+  });
+
+  document.getElementById('song-count').textContent = getAllSongs().length;
+  document.getElementById('results-label').textContent = `${songs.length} song${songs.length!==1?'s':''} found`;
+
+  const list = document.getElementById('song-list');
+  // keep results label
+  const label = list.querySelector('.results-label');
+  list.innerHTML = '';
+  list.appendChild(label);
+  label.textContent = `${songs.length} song${songs.length!==1?'s':''} found`;
+
+  songs.forEach(song => {
+    const cat = getCategoryById(song.category);
+    const isFav = state.favorites.includes(song.id);
+    const card = document.createElement('div');
+    card.className = 'song-card';
+    card.innerHTML = `
+      <div class="song-card-body" onclick="openSong('${song.id}')">
+        <div class="song-number">${song.number}</div>
+        <div class="song-info">
+          <div class="song-title">${song.title}</div>
+          <div class="song-meta">
+            <span class="song-cat">${cat ? cat.icon+' '+cat.label : song.category}</span>
+            ${song.key ? `<span class="song-key">Key of ${song.key}</span>` : ''}
+          </div>
+          ${song.author ? `<div class="song-author">${song.author}</div>` : ''}
+        </div>
+        <span class="fav-btn" onclick="event.stopPropagation();toggleFav('${song.id}')">${isFav ? '⭐' : '☆'}</span>
+      </div>
+      <div class="song-card-footer">🎵 ${song.tempo||'—'} • ${song.lyrics.length} section${song.lyrics.length!==1?'s':''}${song.isCustom?'<span class="custom-tag">Custom</span>':''}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ── CATEGORIES ────────────────────────────────────────────
+function renderCategories() {
+  const bar = document.getElementById('categories-bar');
+  bar.innerHTML = '';
+  const all = document.createElement('div');
+  all.className = 'cat-chip' + (!state.activeCategory ? ' active' : '');
+  all.textContent = 'All Songs';
+  all.onclick = () => { state.activeCategory = null; renderCategories(); renderSongs(); };
+  bar.appendChild(all);
+  BUILTIN_CATEGORIES.forEach(cat => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip' + (state.activeCategory === cat.id ? ' active' : '');
+    chip.textContent = cat.icon + ' ' + cat.label;
+    chip.onclick = () => { state.activeCategory = state.activeCategory === cat.id ? null : cat.id; renderCategories(); renderSongs(); };
+    bar.appendChild(chip);
+  });
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+function handleSearch(val) {
+  state.search = val;
+  document.getElementById('search-clear').style.display = val ? 'block' : 'none';
+  renderSongs();
+}
+function clearSearch() {
+  state.search = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  renderSongs();
+}
+
+// ── OPEN SONG ─────────────────────────────────────────────
+function openSong(id) {
+  const song = getAllSongs().find(s => s.id === id);
+  if (!song) return;
+  state.currentSong = song;
+  stopScroll();
+
+  document.getElementById('song-detail-number').textContent = '#' + song.number;
+  document.getElementById('song-detail-title').textContent = song.title;
+  document.getElementById('song-detail-author').textContent = song.author || '';
+  document.getElementById('fav-btn-song').textContent = state.favorites.includes(song.id) ? '⭐' : '☆';
+
+  // Tags
+  const tags = document.getElementById('song-detail-tags');
+  tags.innerHTML = '';
+  const cat = getCategoryById(song.category);
+  if (cat) tags.innerHTML += `<span class="song-tag">${cat.icon} ${cat.label}</span>`;
+  if (song.key) tags.innerHTML += `<span class="song-tag">🎵 Key of ${song.key}</span>`;
+  if (song.tempo) tags.innerHTML += `<span class="song-tag">⏱ ${song.tempo}</span>`;
+  if (song.isCustom) tags.innerHTML += `<span class="song-tag">✍️ Custom</span>`;
+
+  // Edit/Delete buttons
+  const editBtn = document.getElementById('edit-btn');
+  const delBtn = document.getElementById('delete-btn');
+  editBtn.style.display = 'inline';
+  delBtn.style.display = song.isCustom ? 'inline' : 'none';
+
+  // Lyrics
+  const scroll = document.getElementById('lyrics-scroll');
+  scroll.innerHTML = '';
+  song.lyrics.forEach(section => {
+    const div = document.createElement('div');
+    div.className = `lyric-section ${section.type}`;
+    const icon = section.type==='chorus'?'🎵 ':section.type==='bridge'?'🌉 ':'📖 ';
+    div.innerHTML = `<div class="section-label">${icon}${section.label.toUpperCase()}</div>`;
+    section.lines.forEach(line => {
+      const p = document.createElement('div');
+      p.className = 'lyric-line';
+      p.textContent = line || ' ';
+      div.appendChild(p);
+    });
+    scroll.appendChild(div);
+  });
+
+  // Audio player
+  const audioContainer = document.getElementById('audio-player-container');
+  if (song.audioUrl) {
+    audioContainer.innerHTML = renderAudioPlayer(song);
+    audioContainer.style.display = 'block';
+    initAudioPlayer(song.audioUrl);
+  } else {
+    audioContainer.innerHTML = '';
+    audioContainer.style.display = 'none';
+    stopAudio();
+  }
+
+  document.getElementById('scroll-controls').classList.add('visible');
+  showScreen('song');
+}
+
+function goBack() {
+  stopScroll();
+  stopAudio();
+  document.getElementById('scroll-controls').classList.remove('visible');
+  showScreen(state.prevTab || 'songs');
+}
+
+// ── FAVORITES ─────────────────────────────────────────────
+function toggleFav(id) {
+  state.favorites = state.favorites.includes(id)
+    ? state.favorites.filter(f => f !== id)
+    : [...state.favorites, id];
+  save('anasimos_favs', state.favorites);
+  renderSongs();
+  renderFavorites();
+}
+function toggleFavFromSong() {
+  if (!state.currentSong) return;
+  toggleFav(state.currentSong.id);
+  document.getElementById('fav-btn-song').textContent = state.favorites.includes(state.currentSong.id) ? '⭐' : '☆';
+}
+function renderFavorites() {
+  const list = document.getElementById('fav-list');
+  const favSongs = getAllSongs().filter(s => state.favorites.includes(s.id));
+  list.innerHTML = '';
+  if (!favSongs.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><div class="empty-title">No favorites yet</div><div class="empty-desc">Tap the ☆ on any song to save it here</div></div>`;
+    return;
+  }
+  favSongs.forEach(song => {
+    const cat = getCategoryById(song.category);
+    const card = document.createElement('div');
+    card.className = 'song-card';
+    card.innerHTML = `
+      <div class="song-card-body" onclick="openSong('${song.id}')">
+        <div class="song-number">${song.number}</div>
+        <div class="song-info">
+          <div class="song-title">${song.title}</div>
+          <div class="song-meta"><span class="song-cat">${cat ? cat.icon+' '+cat.label : song.category}</span></div>
+        </div>
+        <span class="fav-btn" onclick="event.stopPropagation();toggleFav('${song.id}')">⭐</span>
+      </div>
+      <div class="song-card-footer">🎵 ${song.tempo||'—'} • ${song.lyrics.length} sections</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(tab) {
+  state.prevTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab === 'favorites') renderFavorites();
+  if (tab === 'settings') renderAdminSection();
+  showScreen(tab);
+}
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-'+name);
+  if (el) el.classList.add('active');
+}
+
+// ── AUTO SCROLL ───────────────────────────────────────────
+function toggleAutoScroll() {
+  state.scrolling ? stopScroll() : startScroll();
+}
+function startScroll() {
+  state.scrolling = true;
+  const btn = document.getElementById('scroll-btn');
+  btn.textContent = '⏸ Stop Scroll';
+  btn.className = 'auto-scroll-btn playing';
+  const el = document.getElementById('lyrics-scroll');
+  state.scrollInterval = setInterval(() => {
+    el.scrollTop += state.scrollSpeed / 10;
+    if (el.scrollTop >= el.scrollHeight - el.clientHeight) stopScroll();
+  }, 100);
+}
+function stopScroll() {
+  state.scrolling = false;
+  clearInterval(state.scrollInterval);
+  const btn = document.getElementById('scroll-btn');
+  if (btn) { btn.textContent = '▶ Auto Scroll'; btn.className = 'auto-scroll-btn paused'; }
+}
+function changeSpeed(delta) {
+  state.scrollSpeed = Math.max(10, Math.min(80, state.scrollSpeed + delta));
+}
+
+// ── PIN MODAL ─────────────────────────────────────────────
+let pinValue = '';
+function showPinModal(callback) {
+  state.pinCallback = callback;
+  pinValue = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-modal').classList.add('visible');
+}
+function closePinModal() {
+  document.getElementById('pin-modal').classList.remove('visible');
+  pinValue = '';
+}
+function pinPress(digit) {
+  if (pinValue.length >= 4) return;
+  pinValue += digit;
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  if (pinValue.length === 4) {
+    setTimeout(() => {
+      if (pinValue === ADMIN_PIN) {
+        state.isAdmin = true;
+        closePinModal();
+        if (state.pinCallback) state.pinCallback();
+      } else {
+        document.getElementById('pin-dots').classList.add('shake');
+        document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
+        setTimeout(() => {
+          document.getElementById('pin-dots').classList.remove('shake');
+          pinValue = '';
+          updatePinDots();
+        }, 600);
+      }
+    }, 100);
+  }
+}
+function pinDelete() {
+  pinValue = pinValue.slice(0,-1);
+  updatePinDots();
+}
+function updatePinDots() {
+  for (let i=0;i<4;i++) {
+    const dot = document.getElementById('dot'+i);
+    dot.classList.toggle('filled', i < pinValue.length);
+  }
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+function requireAdmin(cb) {
+  if (state.isAdmin) cb();
+  else showPinModal(cb);
+}
+function handleAddSong() { requireAdmin(() => openAddModal(null)); }
+function handleEditSong() { requireAdmin(() => openAddModal(state.currentSong)); }
+function handleDeleteSong() {
+  requireAdmin(() => {
+    if (!confirm(`Delete "${state.currentSong.title}"? This cannot be undone.`)) return;
+    state.customSongs = state.customSongs.filter(s => s.id !== state.currentSong.id);
+    save('anasimos_custom', state.customSongs);
+    renderSongs();
+    goBack();
+  });
+}
+function renderAdminSection() {
+  const el = document.getElementById('admin-section');
+  if (state.isAdmin) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:36px">🔓</div>
+        <div style="font-size:16px;font-weight:800;color:var(--primary)">Admin Mode Active</div>
+        <div style="font-size:13px;color:var(--text-muted)">You can add and edit lyrics.</div>
+        <button onclick="state.isAdmin=false;renderAdminSection()" style="margin-top:8px;padding:10px 24px;border-radius:14px;border:1.5px solid var(--primary-light);background:var(--surface-alt);color:var(--primary-light);font-weight:700;font-size:15px;cursor:pointer">🔒 End Session</button>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div style="text-align:center;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:36px">🔒</div>
+        <div style="font-size:16px;font-weight:800;color:var(--text-sec)">Developer / Admin Login</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:18px">Enter your PIN to unlock adding and editing lyrics.</div>
+        <button onclick="showPinModal(()=>{renderAdminSection()})" style="margin-top:8px;padding:10px 24px;border-radius:14px;border:none;background:var(--primary);color:#FFF;font-weight:700;font-size:15px;cursor:pointer">🔐 Enter Admin PIN</button>
+      </div>`;
+  }
+}
+
+// ── ADD/EDIT SONG MODAL ───────────────────────────────────
+function openAddModal(song) {
+  state.editingSong = song;
+  state.currentFormSections = song ? JSON.parse(JSON.stringify(song.lyrics)) : [{type:'verse',label:'ቁጥር 1',lines:['']}];
+  state.formCategory = song ? song.category : 'አምልኮ';
+  state.formKey = song ? song.key : '';
+  state.formTempo = song ? song.tempo : 'Moderate';
+
+  document.getElementById('add-modal-title').textContent = song ? '✏️ Edit Song' : '➕ New Song';
+  document.getElementById('f-number').value = song ? song.number : nextNumber();
+  if (document.getElementById('f-audio')) document.getElementById('f-audio').value = song ? (song.audioUrl||'') : '';
+  document.getElementById('f-title').value = song ? song.title : '';
+  document.getElementById('f-author').value = song ? song.author : '';
+
+  renderFormCategories();
+  renderFormKeys();
+  renderFormTempos();
+  renderFormSections();
+
+  document.getElementById('add-modal').classList.add('visible');
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('visible');
+}
+function nextNumber() {
+  const nums = getAllSongs().map(s=>parseInt(s.number)).filter(Boolean);
+  return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+}
+function renderFormCategories() {
+  const el = document.getElementById('f-category');
+  el.innerHTML = '';
+  BUILTIN_CATEGORIES.forEach(cat => {
+    const p = document.createElement('div');
+    p.className = 'pill' + (state.formCategory === cat.id ? ' active' : '');
+    p.textContent = cat.icon + ' ' + cat.label;
+    p.onclick = () => { state.formCategory = cat.id; renderFormCategories(); };
+    el.appendChild(p);
+  });
+}
+function renderFormKeys() {
+  const keys = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  const el = document.getElementById('f-key');
+  el.innerHTML = '';
+  keys.forEach(k => {
+    const p = document.createElement('div');
+    p.className = 'pill' + (state.formKey === k ? ' active' : '');
+    p.textContent = k;
+    p.onclick = () => { state.formKey = k; renderFormKeys(); };
+    el.appendChild(p);
+  });
+}
+function renderFormTempos() {
+  const el = document.getElementById('f-tempo');
+  el.innerHTML = '';
+  ['Slow','Moderate','Fast'].forEach(t => {
+    const p = document.createElement('div');
+    p.className = 'pill' + (state.formTempo === t ? ' active' : '');
+    p.textContent = t;
+    p.onclick = () => { state.formTempo = t; renderFormTempos(); };
+    el.appendChild(p);
+  });
+}
+function renderFormSections() {
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  state.currentFormSections.forEach((section, si) => {
+    const div = document.createElement('div');
+    div.className = 'section-card';
+    div.style.borderLeftColor = section.type==='chorus'?'var(--accent)':section.type==='bridge'?'var(--bridge-border)':'var(--text-sec)';
+    let typeHTML = ['verse','chorus','bridge'].map(t =>
+      `<div class="type-pill${section.type===t?' active':''}" onclick="setSectionType(${si},'${t}')">${t}</div>`
+    ).join('');
+    let linesHTML = section.lines.map((line, li) =>
+      `<div class="line-row">
+        <input class="line-input" value="${line.replace(/"/g,'&quot;')}" placeholder="Line ${li+1}..." oninput="updateLine(${si},${li},this.value)">
+        ${section.lines.length>1?`<span class="remove-line-btn" onclick="removeLine(${si},${li})">✕</span>`:''}
+      </div>`
+    ).join('');
+    div.innerHTML = `
+      <div class="section-type-row">
+        <div style="display:flex;gap:6px">${typeHTML}</div>
+        ${state.currentFormSections.length>1?`<span class="remove-section-btn" onclick="removeSection(${si})">🗑</span>`:''}
+      </div>
+      <input class="section-label-input" value="${section.label}" oninput="updateSectionLabel(${si},this.value)">
+      <div id="lines-${si}">${linesHTML}</div>
+      <button class="add-line-btn" onclick="addLine(${si})">+ Add Line</button>
+    `;
+    container.appendChild(div);
+  });
+}
+function setSectionType(si, type) {
+  state.currentFormSections[si].type = type;
+  const verseCount = state.currentFormSections.filter(s=>s.type==='verse').length;
+  if (type==='verse') state.currentFormSections[si].label = `ቁጥር ${verseCount}`;
+  else state.currentFormSections[si].label = type==='chorus'?'አዝማች':'Bridge';
+  renderFormSections();
+}
+function updateSectionLabel(si, val) { state.currentFormSections[si].label = val; }
+function updateLine(si, li, val) { state.currentFormSections[si].lines[li] = val; }
+function addLine(si) { state.currentFormSections[si].lines.push(''); renderFormSections(); }
+function removeLine(si, li) {
+  state.currentFormSections[si].lines.splice(li, 1);
+  if (!state.currentFormSections[si].lines.length) state.currentFormSections[si].lines = [''];
+  renderFormSections();
+}
+function addSection() {
+  const verseCount = state.currentFormSections.filter(s=>s.type==='verse').length;
+  state.currentFormSections.push({type:'verse',label:`ቁጥር ${verseCount+1}`,lines:['']});
+  renderFormSections();
+}
+function removeSection(si) {
+  if (state.currentFormSections.length<=1) return;
+  state.currentFormSections.splice(si,1);
+  renderFormSections();
+}
+function saveSong() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { alert('Please enter a song title.'); return; }
+  const cleanSections = state.currentFormSections.map(s=>({...s,lines:s.lines.filter(l=>l.trim())})).filter(s=>s.lines.length);
+  if (!cleanSections.length) { alert('Please add at least one lyric line.'); return; }
+  const payload = {
+    id: state.editingSong ? state.editingSong.id : 'custom_'+Date.now(),
+    number: document.getElementById('f-number').value.trim() || nextNumber(),
+    title,
+    author: document.getElementById('f-author').value.trim(),
+    audioUrl: (document.getElementById('f-audio')||{value:''}).value.trim(),
+    category: state.formCategory,
+    key: state.formKey,
+    tempo: state.formTempo,
+    lyrics: cleanSections,
+    isCustom: true,
+  };
+  if (state.editingSong) {
+    state.customSongs = state.customSongs.map(s=>s.id===payload.id?payload:s);
+  } else {
+    state.customSongs.push(payload);
+  }
+  save('anasimos_custom', state.customSongs);
+  closeAddModal();
+  renderSongs();
+  renderFavorites();
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+function toggleDarkMode(on) {
+  state.darkMode = on;
+  document.body.classList.toggle('dark', on);
+  document.getElementById('dark-mode-desc').textContent = on ? 'Night-friendly dark theme' : 'Warm light theme';
+  save('anasimos_dark', on);
+}
+function setFontSize(key) {
+  state.fontSizeKey = key;
+  save('anasimos_font', key);
+  applyFontSize(key);
+  ['small','medium','large','xlarge'].forEach(k => {
+    document.getElementById('fs-'+k).classList.toggle('active', k===key);
+  });
+}
+function applyFontSize(key) {
+  const sizes = FONT_SIZES[key];
+  document.getElementById('preview-title').style.fontSize = sizes.title + 'px';
+  document.getElementById('preview-lyric').style.fontSize = sizes.body + 'px';
+  document.querySelectorAll('.lyric-line').forEach(el => el.style.fontSize = sizes.verse+'px');
+  document.querySelectorAll('.song-title').forEach(el => el.style.fontSize = (sizes.title-2)+'px');
+}
+
+// ── iOS INSTALL BANNER ────────────────────────────────────
+function checkInstall() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone && !load('banner_dismissed', false)) {
+    setTimeout(() => document.getElementById('install-banner').classList.add('visible'), 2000);
+  }
+}
+
+// ── SERVICE WORKER ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+
+// ── AUDIO PLAYER ─────────────────────────────────────────
+let audioEl = null;
+let audioState = { playing: false, duration: 0, position: 0 };
+let audioInterval = null;
+
+function renderAudioPlayer(song) {
+  return `<div class="audio-player">
+    <div class="audio-title-row">
+      <span style="font-size:16px">🎵</span>
+      <div style="flex:1">
+        <div class="audio-title">${song.title}</div>
+        <div class="audio-subtitle">Anasimos Choir</div>
+      </div>
+      <div class="playing-badge" id="playing-badge" style="display:none">
+        <div class="playing-dot"></div>
+        <span class="playing-label">PLAYING</span>
+      </div>
+    </div>
+    <div class="progress-track" onclick="audioSeekClick(event)" id="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      <div class="progress-thumb" id="progress-thumb" style="left:0%"></div>
+    </div>
+    <div class="time-row">
+      <span id="audio-pos">0:00</span>
+      <span id="audio-dur">0:00</span>
+    </div>
+    <div class="audio-controls">
+      <div class="audio-ctrl-btn" onclick="audioSeek(-10)">
+        <span class="audio-ctrl-icon">⏮</span>
+        <span class="audio-ctrl-label">10s</span>
+      </div>
+      <button class="audio-play-btn" id="audio-play-btn" onclick="toggleAudio()">▶</button>
+      <div class="audio-ctrl-btn" onclick="audioSeek(10)">
+        <span class="audio-ctrl-icon">⏭</span>
+        <span class="audio-ctrl-label">10s</span>
+      </div>
+    </div>
+    <div id="audio-error" style="display:none" class="audio-error"></div>
+  </div>`;
+}
+
+function formatTime(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m+':'+sec.toString().padStart(2,'0');
+}
+
+function initAudioPlayer(url) {
+  stopAudio();
+  audioEl = new Audio(url);
+  audioEl.crossOrigin = 'anonymous';
+  audioEl.addEventListener('loadedmetadata', () => {
+    document.getElementById('audio-dur').textContent = formatTime(audioEl.duration);
+  });
+  audioEl.addEventListener('error', () => {
+    const err = document.getElementById('audio-error');
+    if (err) { err.style.display='block'; err.textContent='⚠️ Could not load audio. Check internet connection.'; }
+  });
+  audioEl.addEventListener('ended', () => {
+    updateAudioUI(false);
+    clearInterval(audioInterval);
+  });
+}
+
+function toggleAudio() {
+  if (!audioEl) return;
+  if (audioEl.paused) {
+    audioEl.play();
+    updateAudioUI(true);
+    audioInterval = setInterval(updateProgress, 500);
+  } else {
+    audioEl.pause();
+    updateAudioUI(false);
+    clearInterval(audioInterval);
+  }
+}
+
+function updateAudioUI(playing) {
+  const btn = document.getElementById('audio-play-btn');
+  const badge = document.getElementById('playing-badge');
+  if (btn) btn.textContent = playing ? '⏸' : '▶';
+  if (badge) badge.style.display = playing ? 'flex' : 'none';
+}
+
+function updateProgress() {
+  if (!audioEl) return;
+  const pct = audioEl.duration ? (audioEl.currentTime / audioEl.duration) * 100 : 0;
+  const fill = document.getElementById('progress-fill');
+  const thumb = document.getElementById('progress-thumb');
+  const pos = document.getElementById('audio-pos');
+  if (fill) fill.style.width = pct + '%';
+  if (thumb) thumb.style.left = pct + '%';
+  if (pos) pos.textContent = formatTime(audioEl.currentTime);
+}
+
+function audioSeek(delta) {
+  if (!audioEl) return;
+  audioEl.currentTime = Math.max(0, Math.min(audioEl.duration||0, audioEl.currentTime + delta));
+  updateProgress();
+}
+
+function audioSeekClick(e) {
+  if (!audioEl || !audioEl.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  audioEl.currentTime = pct * audioEl.duration;
+  updateProgress();
+}
+
+function stopAudio() {
+  if (audioEl) { audioEl.pause(); audioEl.src=''; audioEl=null; }
+  clearInterval(audioInterval);
+}
+
+// ── ADD SONG AUDIO FIELD (PWA) ────────────────────────────
+
+// ── INIT ──────────────────────────────────────────────────
+initState();
+renderCategories();
+renderSongs();
+renderAdminSection();
+checkInstall();
+</script>
+</body>
+</html>
